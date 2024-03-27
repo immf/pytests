@@ -53,46 +53,54 @@ def get_called_functions(node, called_functions):
 ############ RESUMIR PROJETO ############
 from pathlib import Path
 
-# def analyze_project(folder_path):
-#     py_files = explore_project_folder(folder_path)
-#     project_summary = {
-#         "Projeto": Path(folder_path).name,
-#         "Arquivos": py_files,
-#         "Imports": [],
-#         "Defined_Functions": [],
-#         "Called_Functions": [],
-#         "Structure": {}
-#     }
+def explore_project_folder(folder_path):
+    """Retorna todos os arquivos Python no projeto."""
+    all_py_files = list(Path(folder_path).rglob("*.py"))
+    return [str(file.relative_to(folder_path)) for file in all_py_files]
 
-#     for file in py_files:
-#         filepath = Path(folder_path) / file
-#         file_analysis = parse_python_file_for_functions_and_imports(str(filepath))
-#         nlines = sum(1 for _ in open(filepath, 'r'))
-#         file_summary = {
-#             "nlines": nlines,
-#             "imports": file_analysis["imports"],
-#             "defined_functions": []
-#         }
 
-#         for func in file_analysis["defined_functions"]:
-#             file_summary["defined_functions"].append({
-#                 "function": func["function_name"],
-#                 "nlines": func["function_code"].count('\n') + 1,
-#                 "called_functions": func["called_functions"],
-#                 "function_parameters": func["function_parameters"]  # Inclusão dos parâmetros da função
-#             })
+def analyze_project(folder_path):
+    py_files = explore_project_folder(folder_path)
+    project_summary = {
+        "Projeto": Path(folder_path).name,
+        "Arquivos": py_files,
+        "Imports": [],
+        "Defined_Functions": [],
+        "Called_Functions": [],
+        "Structure": {}
+    }
 
-#         project_summary["Structure"][file] = file_summary
-#         project_summary["Imports"].extend(file_analysis["imports"])
-#         project_summary["Defined_Functions"].extend([f["function_name"] for f in file_analysis["defined_functions"]])
-#         project_summary["Called_Functions"].extend(file_analysis["called_functions"])
+    for file in py_files:
+        filepath = Path(folder_path) / file
+        file_analysis = parse_python_file_for_functions_and_imports(str(filepath))
+        nlines = sum(1 for _ in open(filepath, 'r'))
+        file_summary = {
+            "nlines": nlines,
+            "imports": file_analysis["imports"],
+            "defined_functions": []
+        }
 
-#     project_summary["Imports"] = list(set(project_summary["Imports"]))
-#     project_summary["Defined_Functions"] = list(set(project_summary["Defined_Functions"]))
-#     project_summary["Called_Functions"] = list(set(project_summary["Called_Functions"]))
+        for func in file_analysis["defined_functions"]:
+            # Adaptado para incluir o código da função
+            file_summary["defined_functions"].append({
+                "function": func["function_name"],
+                "nlines": func["function_code"].count('\n') + 1,
+                "called_functions": func["called_functions"],
+                "function_parameters": func["function_parameters"],
+                "function_code": func["function_code"]  # Inclusão do código da função
+            })
 
-#     return project_summary
+        project_summary["Structure"][file] = file_summary
+        project_summary["Imports"].extend(file_analysis["imports"])
+        project_summary["Defined_Functions"].extend([f["function_name"] for f in file_analysis["defined_functions"]])
+        project_summary["Called_Functions"].extend(file_analysis["called_functions"])
 
+    # Deduplicando listas
+    project_summary["Imports"] = list(set(project_summary["Imports"]))
+    project_summary["Defined_Functions"] = list(set(project_summary["Defined_Functions"]))
+    project_summary["Called_Functions"] = list(set(project_summary["Called_Functions"]))
+
+    return project_summary
 
 ########## GERA DOCUMENTAÇÃO HTML ###########
 def generate_html_documentation(project_summary):
@@ -148,61 +156,6 @@ def generate_html_documentation(project_summary):
 
     html += "</body></html>"
     return html
-
-
-pth="C:\\Users\\ivanm\\Documents\\somepackage-master\\"
-
-analyze_project(pth)
-
-html_documentation = generate_html_documentation(analyze_project(pth))
-with open("project_documentation.html", "w", encoding="utf-8") as file:
-    file.write(html_documentation)
-
-
-from pathlib import Path
-
-def analyze_project(folder_path):
-    py_files = explore_project_folder(folder_path)
-    project_summary = {
-        "Projeto": Path(folder_path).name,
-        "Arquivos": py_files,
-        "Imports": [],
-        "Defined_Functions": [],
-        "Called_Functions": [],
-        "Structure": {}
-    }
-
-    for file in py_files:
-        filepath = Path(folder_path) / file
-        file_analysis = parse_python_file_for_functions_and_imports(str(filepath))
-        nlines = sum(1 for _ in open(filepath, 'r'))
-        file_summary = {
-            "nlines": nlines,
-            "imports": file_analysis["imports"],
-            "defined_functions": []
-        }
-
-        for func in file_analysis["defined_functions"]:
-            # Adaptado para incluir o código da função
-            file_summary["defined_functions"].append({
-                "function": func["function_name"],
-                "nlines": func["function_code"].count('\n') + 1,
-                "called_functions": func["called_functions"],
-                "function_parameters": func["function_parameters"],
-                "function_code": func["function_code"]  # Inclusão do código da função
-            })
-
-        project_summary["Structure"][file] = file_summary
-        project_summary["Imports"].extend(file_analysis["imports"])
-        project_summary["Defined_Functions"].extend([f["function_name"] for f in file_analysis["defined_functions"]])
-        project_summary["Called_Functions"].extend(file_analysis["called_functions"])
-
-    # Deduplicando listas
-    project_summary["Imports"] = list(set(project_summary["Imports"]))
-    project_summary["Defined_Functions"] = list(set(project_summary["Defined_Functions"]))
-    project_summary["Called_Functions"] = list(set(project_summary["Called_Functions"]))
-
-    return project_summary
 
 def generate_html_documentation_js(project_summary):
     html = f"""
@@ -287,6 +240,18 @@ def generate_html_documentation_js(project_summary):
 
     html += "</body></html>"
     return html
+
+
+
+
+pth="C:\\Users\\ivanm\\Documents\\somepackage-master\\"
+
 html_documentation = generate_html_documentation_js(analyze_project(pth))
 with open("project_documentation_js.html", "w", encoding="utf-8") as file:
+    file.write(html_documentation)
+
+analyze_project(pth)
+
+html_documentation = generate_html_documentation(analyze_project(pth))
+with open("project_documentation.html", "w", encoding="utf-8") as file:
     file.write(html_documentation)
