@@ -1,0 +1,292 @@
+############ PARSEAR ARQUIVO .PY ############
+
+import ast
+
+def parse_python_file_for_functions_and_imports(filepath):
+    with open(filepath, 'r') as file:
+        content = file.read()
+    tree = ast.parse(content, filepath)
+
+    defined_functions = []
+    global_called_functions = set()
+    imports_code = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            func_code = ast.get_source_segment(content, node)
+            local_called_functions = set()
+            get_called_functions(node, local_called_functions)
+            global_called_functions.update(local_called_functions)
+
+            # Extração dos parâmetros da função
+            function_parameters = [param.arg for param in node.args.args]
+
+            defined_functions.append({
+                "function_name": node.name,
+                "function_code": func_code,
+                "called_functions": list(local_called_functions),
+                "function_parameters": function_parameters  # Inclusão dos parâmetros da função
+            })
+
+        elif isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
+            import_line = ast.get_source_segment(content, node)
+            imports_code.append(import_line)
+
+    return {
+        "defined_functions": defined_functions,
+        "called_functions": list(global_called_functions),
+        "imports": imports_code
+    }
+
+def get_called_functions(node, called_functions):
+    """Auxiliar para extrair chamadas de funções de um nó AST, incluindo métodos de módulos."""
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            called = f"{node.func.value.id}.{node.func.attr}"
+            called_functions.add(called)
+        elif isinstance(node.func, ast.Name):
+            called_functions.add(node.func.id)
+    for child in ast.iter_child_nodes(node):
+        get_called_functions(child, called_functions)
+
+
+############ RESUMIR PROJETO ############
+from pathlib import Path
+
+# def analyze_project(folder_path):
+#     py_files = explore_project_folder(folder_path)
+#     project_summary = {
+#         "Projeto": Path(folder_path).name,
+#         "Arquivos": py_files,
+#         "Imports": [],
+#         "Defined_Functions": [],
+#         "Called_Functions": [],
+#         "Structure": {}
+#     }
+
+#     for file in py_files:
+#         filepath = Path(folder_path) / file
+#         file_analysis = parse_python_file_for_functions_and_imports(str(filepath))
+#         nlines = sum(1 for _ in open(filepath, 'r'))
+#         file_summary = {
+#             "nlines": nlines,
+#             "imports": file_analysis["imports"],
+#             "defined_functions": []
+#         }
+
+#         for func in file_analysis["defined_functions"]:
+#             file_summary["defined_functions"].append({
+#                 "function": func["function_name"],
+#                 "nlines": func["function_code"].count('\n') + 1,
+#                 "called_functions": func["called_functions"],
+#                 "function_parameters": func["function_parameters"]  # Inclusão dos parâmetros da função
+#             })
+
+#         project_summary["Structure"][file] = file_summary
+#         project_summary["Imports"].extend(file_analysis["imports"])
+#         project_summary["Defined_Functions"].extend([f["function_name"] for f in file_analysis["defined_functions"]])
+#         project_summary["Called_Functions"].extend(file_analysis["called_functions"])
+
+#     project_summary["Imports"] = list(set(project_summary["Imports"]))
+#     project_summary["Defined_Functions"] = list(set(project_summary["Defined_Functions"]))
+#     project_summary["Called_Functions"] = list(set(project_summary["Called_Functions"]))
+
+#     return project_summary
+
+
+########## GERA DOCUMENTAÇÃO HTML ###########
+def generate_html_documentation(project_summary):
+    html = f"""
+    <html>
+    <head>
+        <title>Documentation of {project_summary['Projeto']}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; }}
+            .indent-1 {{ margin-left: 20px; }}
+            .indent-2 {{ margin-left: 40px; }}
+            .indent-3 {{ margin-left: 60px; }}
+            .indent-4 {{ margin-left: 80px; }}
+            ul {{ padding-left: 20px; }}
+        </style>
+    </head>
+    <body>
+    <h1>Project Structure: {project_summary['Projeto']}</h1>
+    <div class="indent-1"><h2>Summary</h2></div>
+    """
+
+    sections = {
+        "Python Files(.PY)": project_summary['Arquivos'],
+        "Imports": project_summary['Imports'],
+        "Defined Functions": project_summary['Defined_Functions'],
+        "Called Functions": project_summary['Called_Functions']
+    }
+
+    for title, items in sections.items():
+        html += f'<hr><div class="indent-1"><h3>{title}</h3><ul>'
+        for item in items:
+            html += f'<li>{item}</li>'
+        html += "</ul></div>"
+
+    html += '<hr><div class="indent-1"><h2>File Structure</h2></div>'
+    for file, details in project_summary['Structure'].items():
+        html += f'<br><div class="indent-1"><strong>{file}</strong> (Lines: {details["nlines"]})</div>'
+        html += '<div class="indent-2">Imports:</div>'
+        if details['imports']:
+            for imp in details['imports']:
+                html += f'<div class="indent-3">{imp}</div>'
+        else:
+            html += '<div class="indent-3">None</div>'
+
+        if details['defined_functions']:
+            html += '<div class="indent-2">Defined Functions:</div>'
+            for func in details['defined_functions']:
+                html += f'<div class="indent-3">Function: {func["function"]}</div>'
+                html += f'<div class="indent-4">Parameters: [ {", ".join(func["function_parameters"])} ]</div>'
+                html += f'<div class="indent-4">Called Functions: [ {", ".join(func["called_functions"])} ]</div>'
+        else:
+            html += '<div class="indent-2">Defined Functions: None</div>'
+
+    html += "</body></html>"
+    return html
+
+
+pth="C:\\Users\\ivanm\\Documents\\somepackage-master\\"
+
+analyze_project(pth)
+
+html_documentation = generate_html_documentation(analyze_project(pth))
+with open("project_documentation.html", "w", encoding="utf-8") as file:
+    file.write(html_documentation)
+
+
+from pathlib import Path
+
+def analyze_project(folder_path):
+    py_files = explore_project_folder(folder_path)
+    project_summary = {
+        "Projeto": Path(folder_path).name,
+        "Arquivos": py_files,
+        "Imports": [],
+        "Defined_Functions": [],
+        "Called_Functions": [],
+        "Structure": {}
+    }
+
+    for file in py_files:
+        filepath = Path(folder_path) / file
+        file_analysis = parse_python_file_for_functions_and_imports(str(filepath))
+        nlines = sum(1 for _ in open(filepath, 'r'))
+        file_summary = {
+            "nlines": nlines,
+            "imports": file_analysis["imports"],
+            "defined_functions": []
+        }
+
+        for func in file_analysis["defined_functions"]:
+            # Adaptado para incluir o código da função
+            file_summary["defined_functions"].append({
+                "function": func["function_name"],
+                "nlines": func["function_code"].count('\n') + 1,
+                "called_functions": func["called_functions"],
+                "function_parameters": func["function_parameters"],
+                "function_code": func["function_code"]  # Inclusão do código da função
+            })
+
+        project_summary["Structure"][file] = file_summary
+        project_summary["Imports"].extend(file_analysis["imports"])
+        project_summary["Defined_Functions"].extend([f["function_name"] for f in file_analysis["defined_functions"]])
+        project_summary["Called_Functions"].extend(file_analysis["called_functions"])
+
+    # Deduplicando listas
+    project_summary["Imports"] = list(set(project_summary["Imports"]))
+    project_summary["Defined_Functions"] = list(set(project_summary["Defined_Functions"]))
+    project_summary["Called_Functions"] = list(set(project_summary["Called_Functions"]))
+
+    return project_summary
+
+def generate_html_documentation_js(project_summary):
+    html = f"""
+    <html>
+    <head>
+        <title>Documentation of {project_summary['Projeto']}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; }}
+            .indent-1 {{ margin-left: 20px; }}
+            .indent-2 {{ margin-left: 40px; }}
+            .indent-3 {{ margin-left: 60px; }}
+            .indent-4 {{ margin-left: 80px; }}
+            ul {{ padding-left: 20px; }}
+            .code-block {{ display: none; background-color: #f4f4f4; padding: 10px; border-left: 3px solid #ccc; margin-top: 5px; white-space: pre-wrap; font-family: monospace; }}
+        </style>
+        <script>
+            function toggleVisibility(id) {{
+                var x = document.getElementById(id);
+                if (x.style.display === "none") {{
+                    x.style.display = "block";
+                }} else {{
+                    x.style.display = "none";
+                }}
+            }}
+
+            function expandAll() {{
+                var elements = document.getElementsByClassName('code-block');
+                for (var i = 0; i < elements.length; i++) {{
+                    elements[i].style.display = 'block';
+                }}
+            }}
+
+            function collapseAll() {{
+                var elements = document.getElementsByClassName('code-block');
+                for (var i = 0; i < elements.length; i++) {{
+                    elements[i].style.display = 'none';
+                }}
+            }}
+        </script>
+    </head>
+    <body>
+    <h1>Project Structure: {project_summary['Projeto']}</h1>
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    """
+
+    sections = {
+        "Python Files(.PY)": project_summary['Arquivos'],
+        "Imports": project_summary['Imports'],
+        "Defined Functions": project_summary['Defined_Functions'],
+        "Called Functions": project_summary['Called_Functions']
+    }
+
+    for title, items in sections.items():
+        html += f'<hr><div class="indent-1"><h2>{title}</h2><ul>'
+        for item in items:
+            html += f'<li>{item}</li>'
+        html += "</ul></div>"
+
+    html += '<hr><div class="indent-1"><h2>File Structure</h2></div>'
+    function_id = 0
+    for file, details in project_summary['Structure'].items():
+        html += f'<br><div class="indent-1"><strong>{file}</strong> (Lines: {details["nlines"]})</div>'
+        html += '<div class="indent-2"><i>Imports:</i></div>'
+        if details['imports']:
+            for imp in details['imports']:
+                html += f'<div class="indent-3">{imp}</div>'
+
+        html += '<div class="indent-2"><i>Defined Functions:</i></div>'
+        for func in details['defined_functions']:
+            html += f'''
+            <div class="indent-3">
+                <u>Function:</u> {func["function"]} 
+                <button onclick="toggleVisibility('func_{function_id}')">Show/Hide Code</button>
+            </div>
+            <div id="func_{function_id}" class="code-block">
+                <pre>{func["function_code"]}</pre>
+            </div>
+            <div class="indent-4">Parameters: [{", ".join(func["function_parameters"])}]</div>
+            <div class="indent-4">Called Functions: [ {", ".join(func["called_functions"])} ]</div>'''
+            function_id += 1
+
+    html += "</body></html>"
+    return html
+html_documentation = generate_html_documentation_js(analyze_project(pth))
+with open("project_documentation_js.html", "w", encoding="utf-8") as file:
+    file.write(html_documentation)
