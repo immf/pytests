@@ -1,0 +1,43 @@
+import pandas as pd
+import os
+from pathlib import Path
+from tqdm import tqdm
+
+# Função para ler dados de um diretório que contém arquivos CSV ou Parquet
+def read_data_from_directory(directory_path, cols=None):
+    directory_path = Path(directory_path)  # Garante que o caminho esteja no formato Path
+    # Verifica se o diretório existe
+    if not directory_path.is_dir():
+        raise ValueError(f"Provided path is not a directory: {directory_path}")
+
+    # Lista todos os arquivos no diretório
+    files = list(directory_path.glob('*'))  # Usa glob para listar todos os arquivos
+
+    # Determina se os arquivos são Parquet ou CSV verificando a extensão do primeiro arquivo
+    if not files:
+        return pd.DataFrame()  # Retorna um DataFrame vazio se não houver arquivos
+    first_file_extension = files[0].suffix
+
+    # Para arquivos Parquet, lê diretamente o diretório
+    if first_file_extension == '.parquet':
+        return pd.read_parquet(directory_path, columns=cols)
+
+    # Para arquivos CSV, itera e concatena todos em um único DataFrame
+    elif first_file_extension == '.csv':
+        data_frames = []
+        for file in tqdm(files, desc=f"Lendo CSVs de {directory_path.name}"):
+            if file.suffix == '.csv':  # Certifica-se de que é um CSV
+                try:
+                    df = pd.read_csv(file, usecols=cols)
+                    data_frames.append(df)
+                except Exception as e:
+                    print(f"Erro ao ler {file}: {e}")
+        return pd.concat(data_frames, ignore_index=True) if data_frames else pd.DataFrame()
+
+    else:
+        raise ValueError("The directory must contain either CSV or Parquet files.")
+
+# Exemplo de uso
+# directory_path = '/caminho/para/diretorio'
+# cols = ['col1', 'col2']  # Colunas específicas para ler, se necessário
+# df = read_data_from_directory(directory_path, cols=cols)
