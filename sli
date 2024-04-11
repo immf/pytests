@@ -1,0 +1,63 @@
+Título: Análise de Transações de Cartão para Identificação do Ramo Empresarial
+
+Subtítulo: Desafios e Soluções em Identificar a Natureza dos Negócios
+
+Seção 1: Objetivo
+
+Texto: "Identificar o ramo de empresas receptoras em transações de cartão através da análise da descrição da transação."
+Ícone: Uma lupa sobre um cartão de crédito.
+Seção 2: Metodologia
+
+Texto: "Uso de Razão Social e CNAE a partir das descrições de transações para mapear o segmento empresarial."
+Ícone: Um fluxograma mostrando a descrição da transação -> base de dados -> CNAE -> Ramo da empresa.
+Seção 3: Desafios
+
+Texto: "Dificuldades na identificação devido a nomes comuns e o vasto volume de dados (20M+ CNPJs)."
+Ícone: Um sinal de atenção sobre um grande banco de dados.
+Seção 4: Benefícios
+
+Texto: "Melhoria na precisão das análises financeiras e de mercado."
+Ícone: Um gráfico ascendente.
+Visualizações:
+
+Diagrama 1: Um exemplo simplificado mostrando a correspondência de "PAGTO DUDALINA" com "Comercialização de vestimentos".
+Diagrama 2: Uma representação do desafio com "TRANSFERENCIA JOAO DOS SANTOS PEREIRA", ilustrando a complexidade e possíveis múltiplos matches.
+Rodapé:
+
+Texto: "Explorando avanços em PLN e machine learning para superar desafios de identificação."
+Para o design do slide, mantenha um fundo claro para facilitar a leitura, com ícones e diagramas coloridos para chamar atenção. Use fontes grandes o suficiente para serem lidas de longe e cores contrastantes para destacar pontos importantes. Lembre-se, a chave é equilibrar informações textuais com elementos visuais para manter o público engajado e facilitar a compreensão do conteúdo.
+---------------------
+
+Título: Enriquecendo Análise de Text Mining com LLM para Classificação de Transações
+
+Subtítulo: Ampliando o Dicionário de Palavras-chave por Categoria
+
+Seção 1: Desafio Atual
+
+Texto: "Modelos de text mining tradicionais dependem da frequência das palavras para calibrar pesos significativos, limitando a detecção de termos raros mas relevantes."
+Ícone: Gráfico de barras mostrando a distribuição de frequência das palavras.
+Seção 2: Solução Proposta
+
+Texto: "Uso de Modelos de Linguagem de Grande Escala (LLM) para identificar palavras-chave cruciais em cada categoria, independentemente da frequência de ocorrência."
+Ícone: Um cérebro estilizado representando a IA, com diferentes categorias e palavras-chave emanando dele.
+Seção 3: Benefícios
+
+Texto: "Enriquecimento do modelo com palavras-chave de baixa frequência permite identificações mais precisas e refinadas de categorias de transações."
+Ícone: Um alvo com uma seta no centro, simbolizando precisão.
+Seção 4: Exemplos por Categoria
+
+Supermercado: "Extra, Carrefour, Dia, Hortifruti..."
+Posto de Gasolina: "Shell, BR, combustível..."
+Vestimentas e Acessórios: "Zara, Nike, Dudalina..."
+Gráfico/Ícone: Listas de palavras-chave ao lado de ícones representando cada categoria.
+Seção 5: Desafios e Considerações
+
+Texto: "A integração de palavras raras exige calibração cuidadosa para evitar ruído excessivo no modelo. O potencial de ganho é limitado, mas crucial para o refinamento do modelo."
+Ícone: Um equilíbrio, simbolizando a necessidade de balancear precisão e generalização.
+Visualizações:
+
+Diagrama 1: Um diagrama mostrando o processo de análise: Descrições de transações -> Extração de palavras-chave via LLM -> Enriquecimento do modelo de text mining.
+Diagrama 2 (Opcional): Representação visual da diferença no desempenho do modelo antes e depois da inclusão das palavras-chave geradas pelo LLM.
+Rodapé:
+
+Texto: "Explorando o poder dos LLMs para superar limitações tradicionais de análise de text mining e aprimorar a identificação de categorias de transações."
