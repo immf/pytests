@@ -1,0 +1,19 @@
+import zipfile
+import os
+
+def zip_and_remove_csv(csv_file_path):
+    # Define o nome do arquivo ZIP com base no nome do arquivo CSV original
+    zip_file_path = f"{csv_file_path}.zip"
+
+    # Criar um arquivo ZIP e adicionar o arquivo CSV
+    try:
+        with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(csv_file_path, os.path.basename(csv_file_path))
+
+        # Remover o arquivo CSV original somente se a compressão for bem sucedida
+        os.remove(csv_file_path)
+        print(f"Arquivo '{csv_file_path}' zipado e original removido com sucesso.")
+    except Exception as e:
+        print(f"Erro ao zipar o arquivo: {e}")
+        # Se houver uma falha, o arquivo CSV original não será deletado.
+
