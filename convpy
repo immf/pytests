@@ -1,0 +1,67 @@
+import re
+import numpy as np
+import pandas as pd
+
+def sas_to_python(sas_code):
+    # Substituições básicas
+    replacements = {
+        r' LE ': ' <= ',
+        r' GE ': ' >= ',
+        r' GT ': ' > ',
+        r' LT ': ' < ',
+        r' EQ ': ' == ',
+        r' NE ': ' != ',
+        r' AND ': ' & ',
+        r' OR ': ' | ',
+        r' THEN': ':',
+        r'IF ': 'np.where(',
+        r' ELSE': ')'
+    }
+    
+    # Realiza as substituições básicas
+    for sas_pattern, py_pattern in replacements.items():
+        sas_code = re.sub(sas_pattern, py_pattern, sas_code)
+
+    # Tratamento especial para 'in' e '='
+    sas_code = re.sub(r' = ', ' == ', sas_code)
+    sas_code = re.sub(r'in \(', '.isin([', sas_code)
+    sas_code = re.sub(r'\)\)', '])', sas_code)
+
+    # Ajusta o formato de np.where com parênteses corretos
+    sas_code = re.sub(r'np\.where\((.*?)\):', r'np.where(\1, ', sas_code)
+
+    # Inicializa a lista de linhas Python
+    python_code = []
+    
+    # Converte cada linha de SAS para Python
+    for line in sas_code.split(';'):
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Identifica a variável de resultado
+        if 'np.where' not in line:
+            var_result = line.split('=')[0].strip()
+            default_value = line.split('=')[1].strip()
+            python_code.append(f"X['{var_result}']={default_value}")
+        else:
+            condition_value = line.split('=')[1].strip()
+            python_code[-1] = python_code[-1][:-1] + f", X['{var_result}'])"
+            python_code.append(f"X['{var_result}']=np.where({line}")
+    
+    return '\n'.join(python_code)
+
+# Exemplo de uso
+sas_code = """
+IF COD1 LE 2 THEN RESULT=1; ELSE
+IF COD1 GT 2 AND COD1 LE 5 THEN RESULT=2; ELSE
+RESULT=3;
+
+IF COD2 = "A" THEN C_COD2=55; ELSE
+IF COD2 in ("B" "C") THEN C_COD2=66; ELSE
+IF COD2 in ("X","Y","Z") THEN C_COD2=77; ELSE
+C_COD2=88;
+"""
+
+python_code = sas_to_python(sas_code)
+print(python_code)
