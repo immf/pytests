@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor SAS para Python</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 45%;
+            height: 300px;
+            margin: 0 2%;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Conversor de Código SAS para Python</h1>
+    <div class="container">
+        <textarea id="sasInput" placeholder="Insira o código SAS aqui..."></textarea>
+        <textarea id="pythonOutput" readonly placeholder="Código Python convertido aparecerá aqui..."></textarea>
+    </div>
+
+    <script>
+        function convertSASToPython(sasCode) {
+            // Converte todo o código para maiúsculas
+            sasCode = sasCode.toUpperCase();
+
+            // Substituições básicas
+            const replacements = {
+                ' LE ': ' <= ',
+                ' GE ': ' >= ',
+                ' GT ': ' > ',
+                ' LT ': ' < ',
+                ' EQ ': ' == ',
+                ' NE ': ' != ',
+                ' AND ': ' & ',
+                ' OR ': ' | ',
+                ' THEN': ':',
+                'IF ': 'np.where(',
+                ' ELSE': ')'
+            };
+
+            // Dividir o código em linhas
+            const lines = sasCode.split(';').map(line => line.trim()).filter(line => line);
+
+            // Inicializa a lista de linhas Python
+            const pythonCode = [];
+            let indentLevel = 0;
+
+            // Função auxiliar para indentação
+            function getIndentation(level) {
+                return '    '.repeat(level);
+            }
+
+            for (let line of lines) {
+                // Identificar o tipo de linha e ajustar a indentação
+                if (line.startsWith('IF ')) {
+                    line = line.replace(/THEN:$/, ':');
+                    pythonCode.push(getIndentation(indentLevel) + 'if ' + line.substring(3));
+                    indentLevel++;
+                } else if (line.startsWith('ELSE ')) {
+                    indentLevel--;
+                    pythonCode.push(getIndentation(indentLevel) + 'else:');
+                    indentLevel++;
+                } else if (line.startsWith('ELSE')) {
+                    indentLevel--;
+                    pythonCode.push(getIndentation(indentLevel) + 'else:');
+                    indentLevel++;
+                } else {
+                    // Realiza as substituições básicas
+                    for (const [sasPattern, pyPattern] of Object.entries(replacements)) {
+                        const regex = new RegExp(sasPattern, 'g');
+                        line = line.replace(regex, pyPattern);
+                    }
+                    // Tratamento especial para 'in' e '='
+                    line = line.replace(/ = /g, ' == ');
+                    line = line.replace(/ IN \(/g, '.isin([');
+                    line = line.replace(/\)\)/g, '])');
+
+                    // Adiciona a linha processada ao código Python
+                    pythonCode.push(getIndentation(indentLevel) + line);
+                }
+            }
+
+            return pythonCode.join('\n');
+        }
+
+        document.getElementById('sasInput').addEventListener('input', function () {
+            const sasCode = this.value;
+            const pythonCode = convertSASToPython(sasCode);
+            document.getElementById('pythonOutput').value = pythonCode;
+        });
+    </script>
+</body>
+</html>
